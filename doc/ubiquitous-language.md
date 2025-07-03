@@ -1,8 +1,12 @@
 # Ubiquitous Language
 
-agentic-todo-mdp プロジェクトで使用される共通言語の定義
+agentic-todo-mcp プロジェクトで使用される共通言語の定義
 
 ## Core Concepts
+
+### agentic-todo-mcp
+
+- プロジェクト名、開発コード名
 
 ### task
 - main-task, sub-task の2階層
@@ -38,7 +42,6 @@ agentic-todo-mdp プロジェクトで使用される共通言語の定義
     - .todo/cotext/T002.md
 
 ### category
-
 - taskを分類するための概念
 - 任意の名称を使用できる
 
