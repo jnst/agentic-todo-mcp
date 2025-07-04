@@ -18,6 +18,7 @@
 - [ ] .golangci.yml の設定ファイル作成
 - [ ] VSCode/IDE設定の整備（保存時自動実行）
 - [ ] Makefileの作成（開発コマンドの統一）
+- [ ] go.mod dependencies の追加（go-cmp, gomock, MCP SDK）
 
 ### 2. CI/CD基盤構築
 - [ ] GitHub Actions の設定
@@ -33,7 +34,17 @@
 - [ ] テストディレクトリ構造の設計
 - [ ] テストカバレッジの計測設定
 
-### 4. コアデータモデルのTDD実装
+### 4. MCP Server基盤のTDD実装
+- [ ] mcp.Server の初期化をTDDで実装する
+  - [ ] Server作成のテストケース作成
+  - [ ] 最小限のServer初期化実装
+  - [ ] Server設定のリファクタリング
+- [ ] Transport層をTDDで実装する
+  - [ ] StdioTransport のテストケース作成
+  - [ ] Transport接続の実装
+  - [ ] エラーハンドリングの実装
+
+### 5. コアデータモデルのTDD実装
 - [ ] Task構造体をTDDで実装する
   - [ ] Task構造体のテストケース作成
   - [ ] 最小限のTask構造体実装
@@ -50,7 +61,7 @@
 
 ## 優先度：中（Medium Priority） - コア機能のTDD実装
 
-### 5. ファイル操作層のTDD実装
+### 6. ファイル操作層のTDD実装
 - [ ] MarkdownパーサーをTDDで実装する
   - [ ] パーサーのテストケース作成（様々な入力パターン）
   - [ ] 最小限のパーサー実装
@@ -61,24 +72,27 @@
   - [ ] ファイルI/Oのリファクタリング
 - [ ] データ整合性チェックをTDDで実装する
 
-### 6. ビジネスロジックのTDD実装
-- [ ] タスク管理ロジックをTDDで実装する
-  - [ ] create_task ロジックのテスト・実装
-  - [ ] update_task ロジックのテスト・実装
-  - [ ] delete_task ロジックのテスト・実装
-  - [ ] reorder_task ロジックのテスト・実装
-  - [ ] list_tasks ロジックのテスト・実装
-  - [ ] search_tasks ロジックのテスト・実装
-- [ ] ADR管理ロジックをTDDで実装する
-  - [ ] create_adr ロジックのテスト・実装
-  - [ ] update_adr_status ロジックのテスト・実装
-  - [ ] list_adrs ロジックのテスト・実装
-- [ ] コンテキスト管理ロジックをTDDで実装する
-  - [ ] update_context ロジックのテスト・実装
-  - [ ] get_context ロジックのテスト・実装
-  - [ ] search_contexts ロジックのテスト・実装
+### 7. MCPツール実装のTDD実装
+- [ ] タスク管理MCPツールをTDDで実装する（6ツール）
+  - [ ] create_task MCPツールのテスト・実装
+    - [ ] mcp.NewServerTool でのツール定義
+    - [ ] ハンドラー関数の実装（CallToolParams → CallToolResult）
+    - [ ] 入力パラメータのバリデーション
+  - [ ] update_task MCPツールのテスト・実装
+  - [ ] delete_task MCPツールのテスト・実装
+  - [ ] reorder_task MCPツールのテスト・実装
+  - [ ] list_tasks MCPツールのテスト・実装
+  - [ ] search_tasks MCPツールのテスト・実装
+- [ ] ADR管理MCPツールをTDDで実装する（3ツール）
+  - [ ] create_adr MCPツールのテスト・実装
+  - [ ] update_adr_status MCPツールのテスト・実装
+  - [ ] list_adrs MCPツールのテスト・実装
+- [ ] コンテキスト管理MCPツールをTDDで実装する（3ツール）
+  - [ ] update_context MCPツールのテスト・実装
+  - [ ] get_context MCPツールのテスト・実装
+  - [ ] search_contexts MCPツールのテスト・実装
 
-### 7. 検索機能のTDD実装
+### 8. 検索機能のTDD実装
 - [ ] 検索アルゴリズムをTDDで実装する
   - [ ] 全文検索のテストケース作成
   - [ ] 関連度スコア算出のテスト・実装
@@ -86,10 +100,11 @@
 
 ## 優先度：低（Low Priority） - 統合・最適化のTDD実装
 
-### 8. MCP統合のTDD実装
-- [ ] MCPツールをTDDで実装する
-  - [ ] 各MCPツールの統合テスト作成
-  - [ ] MCPサーバーの統合テスト
+### 9. MCP統合のTDD実装
+- [ ] MCP Serverの統合をTDDで実装する
+  - [ ] server.AddTools() での全ツール登録テスト
+  - [ ] server.Run() での stdio通信テスト
+  - [ ] エンドツーエンドの統合テスト作成
   - [ ] エラーハンドリングの網羅的テスト
 - [ ] エラーハンドリングをTDDで実装する
   - [ ] エラーケースの網羅的テスト作成
@@ -99,14 +114,16 @@
   - [ ] 並行処理のテスト
   - [ ] メモリ使用量のテスト
 
-### 9. 継続的リファクタリング
+### 10. 継続的リファクタリング
 - [ ] 各Red-Green-Refactorサイクルでコード改善
 - [ ] テストカバレッジの向上
 - [ ] コードの可読性・保守性の向上
 
 ## 技術要件
 - Go 1.24.3
-- modelcontextprotocol/go-sdk v0.1.0
+- github.com/modelcontextprotocol/go-sdk v0.1.0
+- github.com/google/go-cmp （テスト比較）
+- github.com/uber-go/mock （モック生成）
 - 応答時間: 通常操作 < 100ms, 検索操作 < 500ms
 - サポートファイル数: 最大10,000ファイル
 
@@ -123,6 +140,14 @@
 - **uber/gomock**: モック生成・管理（必要な場合のみ）
 - **標準testing**: Go標準のテストフレームワーク
 - **testify等のライブラリ**: できるだけ使わない方針
+
+### MCP SDK関連の重要ポイント
+- **mcp.NewServer()**: サーバー初期化（名前、バージョン、オプション）
+- **mcp.NewServerTool()**: ツール定義（名前、説明、ハンドラー、入力スキーマ）
+- **server.AddTools()**: サーバーにツールを登録
+- **server.Run()**: stdio上でサーバー実行
+- **CallToolParams/CallToolResult**: ツール呼び出しの入出力型
+- **mcp.StdioTransport**: 標準入出力での通信
 
 ## ディレクトリ構造計画
 ```
@@ -153,3 +178,41 @@ agentic-todo-mcp/
 - @doc/mcp-spec.md: MCP API仕様
 - @doc/ubiquitous-language.md: 用語定義
 - @CLAUDE.md: プロジェクト指示書
+
+## MCP Go SDKの基本実装パターン
+
+### サーバー初期化
+```go
+server := mcp.NewServer("agentic-todo-mcp", "v0.1.0", nil)
+```
+
+### ツール定義
+```go
+type CreateTaskParams struct {
+    Title       string   `json:"title"`
+    Category    string   `json:"category,omitempty"`
+    Description string   `json:"description,omitempty"`
+    Subtasks    []string `json:"subtasks,omitempty"`
+}
+
+func CreateTaskHandler(ctx context.Context, session *mcp.ServerSession, params *mcp.CallToolParamsFor[CreateTaskParams]) (*mcp.CallToolResultFor[any], error) {
+    // 実装
+    return &mcp.CallToolResultFor[any]{
+        Content: []mcp.Content{&mcp.TextContent{Text: "Task created"}},
+    }, nil
+}
+
+server.AddTools(
+    mcp.NewServerTool("create_task", "Create new main-task", CreateTaskHandler, mcp.Input(
+        mcp.Property("title", mcp.Description("Task title")),
+        mcp.Property("category", mcp.Description("Task category")),
+    )),
+)
+```
+
+### サーバー実行
+```go
+if err := server.Run(context.Background(), mcp.NewStdioTransport()); err != nil {
+    log.Fatal(err)
+}
+```
