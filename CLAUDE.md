@@ -92,7 +92,7 @@ go run cmd/server/main.go
 
 ## Key Dependencies
 
-- `github.com/modelcontextprotocol/go-sdk` v0.0.0-20250627194314-8a3f272dbbcf - MCP protocol implementation
+- `github.com/modelcontextprotocol/go-sdk` v0.1.0 - MCP protocol implementation
 - `github.com/google/go-cmp` - Deep comparison for testing
 - `github.com/uber-go/mock` - Mock generation (when needed)
 
