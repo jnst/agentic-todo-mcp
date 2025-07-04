@@ -1,3 +1,4 @@
+// Package main provides the entry point for the agentic-todo-mcp MCP server.
 package main
 
 import (

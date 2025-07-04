@@ -1,3 +1,5 @@
+// Package model provides core data structures for the agentic-todo-mcp system.
+// It includes Task, ADR, and Context models with validation and business logic.
 package model
 
 import (
@@ -7,13 +9,13 @@ import (
 
 // ADR represents an Architecture Decision Record
 type ADR struct {
-	Number       int    `json:"number"`
 	Title        string `json:"title"`
 	Status       string `json:"status"`
 	Context      string `json:"context"`
 	Decision     string `json:"decision"`
 	Rationale    string `json:"rationale"`
 	Consequences string `json:"consequences,omitempty"`
+	Number       int    `json:"number"`
 }
 
 // NewADR creates a new ADR with the given parameters
@@ -29,7 +31,7 @@ func NewADR(number int, title, context, decision, rationale string) ADR {
 }
 
 // Validate validates the ADR fields
-func (a ADR) Validate() error {
+func (a *ADR) Validate() error {
 	if a.Number <= 0 {
 		return errors.New("ADR number must be positive")
 	}

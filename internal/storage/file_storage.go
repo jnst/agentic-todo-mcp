@@ -1,3 +1,5 @@
+// Package storage provides file operations for the agentic-todo-mcp system.
+// It handles reading and writing of task.md files, context files, and Markdown formatting.
 package storage
 
 import (
@@ -8,6 +10,15 @@ import (
 
 	"github.com/jnst/agentic-todo-mcp/internal/model"
 	"github.com/jnst/agentic-todo-mcp/internal/parser"
+)
+
+const (
+	// DefaultCheckbox is the default checkbox for todo status
+	DefaultCheckbox = "[ ]"
+	// DefaultDirPerm is the default permission for directories
+	DefaultDirPerm = 0o750
+	// DefaultFilePerm is the default permission for files
+	DefaultFilePerm = 0o600
 )
 
 // FileStorage handles file operations for the todo system
@@ -37,7 +48,7 @@ func (fs *FileStorage) ReadTasksFile() ([]parser.ParsedTask, error) {
 // WriteTasksFile writes the parsed tasks to task.md file
 func (fs *FileStorage) WriteTasksFile(tasks []parser.ParsedTask) error {
 	todoDir := filepath.Join(fs.basePath, ".todo")
-	err := os.MkdirAll(todoDir, 0755)
+	err := os.MkdirAll(todoDir, DefaultDirPerm)
 	if err != nil {
 		return fmt.Errorf("failed to create .todo directory: %w", err)
 	}
@@ -45,7 +56,7 @@ func (fs *FileStorage) WriteTasksFile(tasks []parser.ParsedTask) error {
 	content := fs.formatTasksAsMarkdown(tasks)
 	taskFilePath := filepath.Join(todoDir, "task.md")
 
-	err = os.WriteFile(taskFilePath, []byte(content), 0644)
+	err = os.WriteFile(taskFilePath, []byte(content), DefaultFilePerm)
 	if err != nil {
 		return fmt.Errorf("failed to write task file: %w", err)
 	}
@@ -71,14 +82,14 @@ func (fs *FileStorage) ReadContextFile(taskID string) (model.Context, error) {
 // WriteContextFile writes the context to a file
 func (fs *FileStorage) WriteContextFile(context model.Context) error {
 	contextDir := filepath.Join(fs.basePath, ".todo", "context")
-	err := os.MkdirAll(contextDir, 0755)
+	err := os.MkdirAll(contextDir, DefaultDirPerm)
 	if err != nil {
 		return fmt.Errorf("failed to create context directory: %w", err)
 	}
 
 	contextFilePath := filepath.Join(contextDir, context.TaskID+".md")
 
-	err = os.WriteFile(contextFilePath, []byte(context.Content), 0644)
+	err = os.WriteFile(contextFilePath, []byte(context.Content), DefaultFilePerm)
 	if err != nil {
 		return fmt.Errorf("failed to write context file for %s: %w", context.TaskID, err)
 	}
@@ -126,12 +137,12 @@ func (fs *FileStorage) formatTasksAsMarkdown(tasks []parser.ParsedTask) string {
 func (fs *FileStorage) statusToCheckbox(status string) string {
 	switch status {
 	case "todo":
-		return "[ ]"
+		return DefaultCheckbox
 	case "in_progress":
 		return "[-]"
 	case "done":
 		return "[x]"
 	default:
-		return "[ ]"
+		return DefaultCheckbox
 	}
 }

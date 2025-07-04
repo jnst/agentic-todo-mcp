@@ -1,6 +1,12 @@
 linters-settings:
   govet:
-    check-shadowing: true
+    enable:
+      - atomicalign
+      - deepequalerrors
+      - fieldalignment
+      - nilness
+      - sortslice
+      - unusedwrite
   golint:
     min-confidence: 0
   gocyclo:
@@ -31,12 +37,22 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
+  depguard:
+    rules:
+      main:
+        files:
+          - "$all"
+        allow:
+          - "$gostd"
+          - "github.com/jnst/agentic-todo-mcp"
+          - "github.com/modelcontextprotocol/go-sdk"
+          - "github.com/google/go-cmp"
+          - "github.com/uber/mock"
 
 linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -49,48 +65,46 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
-    - gomnd
+    - mnd
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
     - misspell
     - nakedret
     - noctx
     - nolintlint
     - rowserrcheck
-    - scopelint
+    - copyloopvar
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
+    - revive
 
 issues:
   exclude-rules:
     - text: "at least one file in a package should have a package comment"
       linters:
-        - golint
+        - revive
   exclude-use-default: false
   exclude:
     - "G104:"
+    - "G304:"
     - "G307:"
+  exclude-dirs:
+    - vendor
+    - .todo
+  exclude-files:
+    - ".*\\.pb\\.go$"
+    - ".*_test\\.go$"
 
 run:
   timeout: 10m
   issues-exit-code: 1
   tests: true
-  skip-dirs:
-    - vendor
-    - .todo
-  skip-files:
-    - ".*\\.pb\\.go$"
-    - ".*_test\\.go$"

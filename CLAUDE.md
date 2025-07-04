@@ -35,82 +35,106 @@ For detailed terminology and data model definitions, see:
 
 ## Development Commands
 
-### Code Quality (Priority 1)
+### Essential Commands (Must Run First)
 ```bash
-# Format code with gofmt
-go fmt ./...
+# Install development tools (run once)
+make install-tools
 
-# Organize imports with goimports
-goimports -w .
+# Complete development workflow
+make all          # Format, lint, test, and build
+make dev          # Format, lint, test (without build)
+make ci           # CI workflow with race detection
+```
+
+### Code Quality (Critical for AI Development)
+```bash
+# Auto-fix common issues (recommended first)
+make fix
+
+# Format code with gofmt and goimports
+make fmt
 
 # Run comprehensive linter
+make lint
 golangci-lint run
 
-# Run all quality checks
-make lint
-
-# Auto-fix common issues
-make fix
+# IMPORTANT: Linter must pass before committing
+# The project has strict linting configured to prevent regressions
 ```
 
 ### Testing (TDD Approach)
 ```bash
 # Run all tests
-go test ./...
 make test
+go test ./...
 
-# Run tests with coverage
-go test -cover ./...
-make test-coverage
+# Run specific package tests
+go test ./internal/model
+go test ./internal/mcp
 
-# Run tests with detailed coverage report and HTML output
-make test-coverage
-
-# Run a single test
+# Run specific test function
 go test -run TestTaskCreation ./internal/model
+go test -run TestCreateTaskHandler ./internal/mcp
 
-# Run tests with race detection
-go test -race ./...
+# Test with coverage (opens HTML report)
+make test-coverage
+
+# Test with race detection (required for CI)
 make test-race
 
-# Generate mocks (when needed)
-go generate ./...
+# Generate mocks when needed
 make generate
 ```
 
 ### Build and Run
 ```bash
-# Download dependencies
-go mod tidy
+# Download and organize dependencies
 make deps
 
-# Build the project
+# Build the MCP server
 make build
 
-# Run MCP server (implemented with create_task tool)
-go run cmd/server/main.go
+# Run MCP server directly
 make run
+go run cmd/server/main.go
 
-# Development workflow (format, lint, test)
-make dev
-
-# Complete workflow (format, lint, test, build)
-make all
+# Clean build artifacts
+make clean
 ```
 
-## Development Philosophy
+## Development Philosophy & Critical Guidelines
 
 **TDD Approach**: This project follows t-wada's Test-Driven Development methodology with Red-Green-Refactor cycles.
 
 **Code Quality First**: Formatter and linter setup is prioritized to prevent regressions, especially critical for AI-assisted development.
 
+**CRITICAL: Linter Configuration**:
+- The project has strict linting rules that MUST pass before committing
+- Run `make fix` before starting work to auto-fix common issues
+- Run `make lint` frequently during development
+- All linting issues must be resolved properly, not bypassed with nolint directives
+- Use named constants for magic numbers and proper comment formats for exported identifiers
+
 **Package Naming Convention**: Use singular form for all package names (e.g., `internal/model` not `internal/models`). Packages represent concepts, not collections.
 
 **Tool Selection**:
-- **go-cmp**: Main tool for deep comparison and diff display (avoids testify)
+- **go-cmp**: Main tool for deep comparison and diff display (avoids testify)  
 - **uber/gomock**: Mock generation only when needed
-- **golangci-lint**: Comprehensive linting (deadcode, unused, misspell, etc.)
+- **golangci-lint**: Comprehensive linting with custom configuration including fieldalignment
 - **goimports**: Automatic import organization
+
+**Import Aliasing Requirements**:
+```go
+// REQUIRED: Avoid package name collision
+import mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
+```
+
+**Code Quality Standards**:
+- **Struct Field Alignment**: Order fields to minimize memory usage (strings first, then ints)
+- **Named Constants**: Use descriptive constants instead of magic numbers (e.g., `DefaultDirPerm = 0o750`)
+- **Exported Comments**: All exported identifiers must have properly formatted comments
+- **Error Handling**: Comprehensive error handling with context-specific error messages
+- **File Permissions**: Use consistent named constants for file and directory permissions
 
 ## Key Dependencies
 
@@ -195,7 +219,7 @@ agentic-todo-mcp/
 - Comprehensive validation with descriptive error messages
 
 **ADR Model** (`internal/model/adr.go`):
-- Number, Title, Status, Context, Decision, Rationale, Consequences fields
+- Title, Status, Context, Decision, Rationale, Consequences, Number fields (optimized for memory alignment)
 - Status validation: `"Proposed"`, `"Accepted"`, `"Deprecated"`
 - `NewADR()` constructor with default "Proposed" status
 - Full field validation ensuring required information
@@ -305,10 +329,77 @@ mcp.RunServer(ctx, server)
 
 **Next Priority Tools** (per TODO.md):
 1. `update_task` - Existing task modification
-2. `list_tasks` - Task listing with filtering
+2. `list_tasks` - Task listing with filtering  
 3. `delete_task` - Task + context deletion
 4. `search_tasks` - Full-text search
 5. `reorder_task` - Priority management
+
+## Development Workflow for New MCP Tools
+
+When implementing new MCP tools, follow this TDD pattern:
+
+### 1. Test-First Approach
+```bash
+# 1. Create test file first
+touch internal/mcp/tools_update_test.go
+
+# 2. Write failing test
+go test ./internal/mcp -run TestUpdateTaskHandler
+
+# 3. Implement minimal code to pass
+# 4. Refactor and improve
+```
+
+### 2. Tool Implementation Pattern
+```go
+// 1. Define input/output structs
+type UpdateTaskParams struct {
+    TaskID string `json:"task_id"`
+    // ... other fields
+}
+
+// 2. Implement handler with proper signature
+func (ts *ToolService) UpdateTaskHandler(_ context.Context, _ *mcpsdk.ServerSession, 
+    params *mcpsdk.CallToolParamsFor[UpdateTaskParams]) (*mcpsdk.CallToolResultFor[any], error) {
+    // Implementation here
+}
+
+// 3. Register tool in AddTools function
+func AddUpdateTaskTool(server *mcpsdk.Server, toolService *ToolService) {
+    server.AddTools(
+        mcpsdk.NewServerTool("update_task", "Update existing task",
+            toolService.UpdateTaskHandler,
+            mcpsdk.Input(/* schema definition */),
+        ),
+    )
+}
+```
+
+### 3. Testing Requirements
+- Unit tests for tool handlers
+- Integration tests for file operations  
+- Round-trip tests for data consistency
+- Error case coverage
+
+## Makefile Targets Reference
+
+Quick reference for all available make targets:
+- `make help` - Show all available targets
+- `make install-tools` - Install dev tools (run once)
+- `make all` - Complete workflow
+- `make dev` - Development workflow  
+- `make ci` - CI workflow
+- `make fix` - Auto-fix issues
+- `make fmt` - Format code
+- `make lint` - Run linter
+- `make test` - Run tests
+- `make test-coverage` - Test with coverage
+- `make test-race` - Test with race detection
+- `make build` - Build binary
+- `make run` - Run server
+- `make clean` - Clean artifacts
+- `make deps` - Manage dependencies
+- `make generate` - Generate mocks
 
 ## MCP API Details
 

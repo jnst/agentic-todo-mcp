@@ -1,3 +1,5 @@
+// Package mcp provides MCP (Model Context Protocol) server implementation for agentic-todo-mcp.
+// It handles MCP protocol communication, tool registration, and server lifecycle management.
 package mcp
 
 import (
@@ -7,7 +9,9 @@ import (
 )
 
 const (
-	ServerName    = "agentic-todo-mcp"
+	// ServerName is the name of the MCP server
+	ServerName = "agentic-todo-mcp"
+	// ServerVersion is the version of the MCP server
 	ServerVersion = "0.1.0"
 )
 

@@ -1,3 +1,5 @@
+// Package mcp provides MCP (Model Context Protocol) tool implementations for agentic-todo-mcp.
+// It handles task management tools including create_task and related operations.
 package mcp
 
 import (
@@ -13,6 +15,13 @@ import (
 	"github.com/jnst/agentic-todo-mcp/internal/model"
 	"github.com/jnst/agentic-todo-mcp/internal/parser"
 	"github.com/jnst/agentic-todo-mcp/internal/storage"
+)
+
+const (
+	// DefaultTaskID is the default task ID for first task
+	DefaultTaskID = "T001"
+	// DefaultStatus is the default status for new tasks
+	DefaultStatus = "todo"
 )
 
 // CreateTaskParams defines the input parameters for create_task tool
@@ -43,15 +52,16 @@ func NewToolService(basePath string) *ToolService {
 }
 
 // CreateTaskHandler handles the create_task MCP tool
-func (ts *ToolService) CreateTaskHandler(ctx context.Context, session *mcpsdk.ServerSession, params *mcpsdk.CallToolParamsFor[CreateTaskParams]) (*mcpsdk.CallToolResultFor[any], error) {
+func (ts *ToolService) CreateTaskHandler(
+	_ context.Context,
+	_ *mcpsdk.ServerSession,
+	params *mcpsdk.CallToolParamsFor[CreateTaskParams],
+) (*mcpsdk.CallToolResultFor[any], error) {
 	args := params.Arguments
 
 	// Validate required fields
 	if args.Title == "" {
-		return &mcpsdk.CallToolResultFor[any]{
-			IsError: true,
-			Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: "Title is required"}},
-		}, nil
+		return ts.createErrorResponse("Title is required"), nil
 	}
 
 	// Read existing tasks to generate next ID
@@ -61,13 +71,8 @@ func (ts *ToolService) CreateTaskHandler(ctx context.Context, session *mcpsdk.Se
 		existingTasks = []parser.ParsedTask{}
 	}
 
-	// Extract existing task IDs
-	var existingIDs []string
-	for _, task := range existingTasks {
-		existingIDs = append(existingIDs, task.Task.ID)
-	}
-
-	// Generate next task ID
+	// Extract existing task IDs and generate next task ID
+	existingIDs := ts.extractTaskIDs(existingTasks)
 	newTaskID := GenerateNextTaskID(existingIDs)
 
 	// Set default category if not provided
@@ -76,78 +81,35 @@ func (ts *ToolService) CreateTaskHandler(ctx context.Context, session *mcpsdk.Se
 		category = "Default"
 	}
 
-	// Create new main task
-	newTask := model.Task{
-		ID:       newTaskID,
-		Title:    args.Title,
-		Status:   "todo",
-		Category: category,
-	}
+	// Create new main task and subtasks
+	newTask := ts.createTask(newTaskID, args.Title, category)
+	subtasks := ts.createSubtasks(args.Subtasks)
 
-	// Create subtasks
-	var subtasks []model.Task
-	for _, subtaskTitle := range args.Subtasks {
-		subtask := model.Task{
-			Title:  subtaskTitle,
-			Status: "todo",
-		}
-		subtasks = append(subtasks, subtask)
-	}
-
-	// Create parsed task
+	// Create parsed task and add to existing tasks
 	parsedTask := parser.ParsedTask{
 		Task:     newTask,
 		SubTasks: subtasks,
 	}
-
-	// Add to existing tasks
 	existingTasks = append(existingTasks, parsedTask)
 
 	// Write updated tasks to file
-	err = ts.storage.WriteTasksFile(existingTasks)
-	if err != nil {
-		return &mcpsdk.CallToolResultFor[any]{
-			IsError: true,
-			Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: fmt.Sprintf("Failed to write tasks: %v", err)}},
-		}, nil
+	if err := ts.storage.WriteTasksFile(existingTasks); err != nil {
+		return ts.createErrorResponse(fmt.Sprintf("Failed to write tasks: %v", err)), nil
 	}
 
-	// Create context file
-	contextContent := fmt.Sprintf("# Context for %s\n\n## Task Description\n%s\n\n## Created\n%s\n",
-		newTaskID, args.Description, time.Now().Format(time.RFC3339))
-
-	context := model.Context{
-		TaskID:  newTaskID,
-		Content: contextContent,
-	}
-
-	err = ts.storage.WriteContextFile(context)
-	if err != nil {
-		return &mcpsdk.CallToolResultFor[any]{
-			IsError: true,
-			Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: fmt.Sprintf("Failed to write context: %v", err)}},
-		}, nil
+	// Create and write context file
+	if err := ts.createContextFile(newTaskID, args.Description); err != nil {
+		return ts.createErrorResponse(fmt.Sprintf("Failed to write context: %v", err)), nil
 	}
 
 	// Create success response
-	result := CreateTaskResult{
-		TaskID:    newTaskID,
-		FilePath:  fmt.Sprintf(".todo/context/%s.md", newTaskID),
-		CreatedAt: time.Now().Format(time.RFC3339),
-	}
-
-	responseText := fmt.Sprintf("Task created successfully:\n- Task ID: %s\n- Title: %s\n- Category: %s\n- Context file: %s",
-		result.TaskID, args.Title, category, result.FilePath)
-
-	return &mcpsdk.CallToolResultFor[any]{
-		Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: responseText}},
-	}, nil
+	return ts.createSuccessResponse(newTaskID, args.Title, category), nil
 }
 
 // GenerateNextTaskID generates the next sequential task ID
 func GenerateNextTaskID(existingIDs []string) string {
 	if len(existingIDs) == 0 {
-		return "T001"
+		return DefaultTaskID
 	}
 
 	// Extract numeric parts and find the maximum
@@ -164,7 +126,7 @@ func GenerateNextTaskID(existingIDs []string) string {
 	}
 
 	if len(numbers) == 0 {
-		return "T001"
+		return DefaultTaskID
 	}
 
 	sort.Ints(numbers)
@@ -172,6 +134,73 @@ func GenerateNextTaskID(existingIDs []string) string {
 	nextNum := maxNum + 1
 
 	return fmt.Sprintf("T%03d", nextNum)
+}
+
+// Helper methods for CreateTaskHandler
+
+// extractTaskIDs extracts task IDs from existing tasks
+func (ts *ToolService) extractTaskIDs(tasks []parser.ParsedTask) []string {
+	var ids []string
+	for _, task := range tasks {
+		ids = append(ids, task.Task.ID)
+	}
+	return ids
+}
+
+// createTask creates a new Task with the given parameters
+func (ts *ToolService) createTask(id, title, category string) model.Task {
+	return model.Task{
+		ID:       id,
+		Title:    title,
+		Status:   DefaultStatus,
+		Category: category,
+	}
+}
+
+// createSubtasks creates subtasks from a list of titles
+func (ts *ToolService) createSubtasks(titles []string) []model.Task {
+	var subtasks []model.Task
+	for _, title := range titles {
+		subtask := model.Task{
+			Title:  title,
+			Status: DefaultStatus,
+		}
+		subtasks = append(subtasks, subtask)
+	}
+	return subtasks
+}
+
+// createContextFile creates and writes a context file
+func (ts *ToolService) createContextFile(taskID, description string) error {
+	contextContent := fmt.Sprintf("# Context for %s\n\n## Task Description\n%s\n\n## Created\n%s\n",
+		taskID, description, time.Now().Format(time.RFC3339))
+
+	context := model.Context{
+		TaskID:  taskID,
+		Content: contextContent,
+	}
+
+	return ts.storage.WriteContextFile(context)
+}
+
+// createErrorResponse creates an error response
+func (ts *ToolService) createErrorResponse(message string) *mcpsdk.CallToolResultFor[any] {
+	return &mcpsdk.CallToolResultFor[any]{
+		IsError: true,
+		Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: message}},
+	}
+}
+
+// createSuccessResponse creates a success response
+func (ts *ToolService) createSuccessResponse(taskID, title, category string) *mcpsdk.CallToolResultFor[any] {
+	filePath := fmt.Sprintf(".todo/context/%s.md", taskID)
+
+	responseText := fmt.Sprintf("Task created successfully:\n- Task ID: %s\n- Title: %s\n- Category: %s\n- Context file: %s",
+		taskID, title, category, filePath)
+
+	return &mcpsdk.CallToolResultFor[any]{
+		Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: responseText}},
+	}
 }
 
 // AddCreateTaskTool adds the create_task tool to the MCP server
