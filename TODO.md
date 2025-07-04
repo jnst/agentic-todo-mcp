@@ -12,13 +12,13 @@
 ## 優先度：高（High Priority） - 開発環境基盤構築
 
 ### 1. Formatter/Linter環境セットアップ（最優先）
-- [ ] gofmt の設定と実行確認
-- [ ] goimports の導入（import文の自動整理）
-- [ ] golangci-lint の導入（包括的なlinter）
-- [ ] .golangci.yml の設定ファイル作成
-- [ ] VSCode/IDE設定の整備（保存時自動実行）
-- [ ] Makefileの作成（開発コマンドの統一）
-- [ ] go.mod dependencies の追加（go-cmp, gomock, MCP SDK）
+- [x] gofmt の設定と実行確認
+- [x] goimports の導入（import文の自動整理）
+- [x] golangci-lint の導入（包括的なlinter）
+- [x] .golangci.yml の設定ファイル作成
+- [x] VSCode/IDE設定の整備（保存時自動実行）
+- [x] Makefileの作成（開発コマンドの統一）
+- [x] go.mod dependencies の追加（go-cmp, gomock, MCP SDK）
 
 ### 2. CI/CD基盤構築
 - [ ] GitHub Actions の設定
