@@ -26,9 +26,9 @@ func TestADRCreation(t *testing.T) {
 
 func TestADRStatusValidation(t *testing.T) {
 	tests := []struct {
-		name     string
-		status   string
-		wantErr  bool
+		name    string
+		status  string
+		wantErr bool
 	}{
 		{"valid Proposed", "Proposed", false},
 		{"valid Accepted", "Accepted", false},

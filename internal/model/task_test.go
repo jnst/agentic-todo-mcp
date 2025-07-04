@@ -24,9 +24,9 @@ func TestTaskCreation(t *testing.T) {
 
 func TestTaskStatusValidation(t *testing.T) {
 	tests := []struct {
-		name     string
-		status   string
-		wantErr  bool
+		name    string
+		status  string
+		wantErr bool
 	}{
 		{"valid todo", "todo", false},
 		{"valid in_progress", "in_progress", false},

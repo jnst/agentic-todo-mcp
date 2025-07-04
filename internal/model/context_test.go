@@ -22,10 +22,10 @@ func TestContextCreation(t *testing.T) {
 
 func TestContextValidation(t *testing.T) {
 	tests := []struct {
-		name     string
-		taskID   string
-		content  string
-		wantErr  bool
+		name    string
+		taskID  string
+		content string
+		wantErr bool
 	}{
 		{"valid context", "T001", "content", false},
 		{"empty task ID", "", "content", true},

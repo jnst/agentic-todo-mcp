@@ -31,16 +31,16 @@ func (t Task) Validate() error {
 	if t.Title == "" {
 		return errors.New("task title cannot be empty")
 	}
-	
+
 	validStatuses := map[string]bool{
 		"todo":        true,
 		"in_progress": true,
 		"done":        true,
 	}
-	
+
 	if !validStatuses[t.Status] {
 		return fmt.Errorf("invalid status: %s", t.Status)
 	}
-	
+
 	return nil
 }

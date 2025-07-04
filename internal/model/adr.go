@@ -7,12 +7,12 @@ import (
 
 // ADR represents an Architecture Decision Record
 type ADR struct {
-	Number      int    `json:"number"`
-	Title       string `json:"title"`
-	Status      string `json:"status"`
-	Context     string `json:"context"`
-	Decision    string `json:"decision"`
-	Rationale   string `json:"rationale"`
+	Number       int    `json:"number"`
+	Title        string `json:"title"`
+	Status       string `json:"status"`
+	Context      string `json:"context"`
+	Decision     string `json:"decision"`
+	Rationale    string `json:"rationale"`
 	Consequences string `json:"consequences,omitempty"`
 }
 
@@ -45,16 +45,16 @@ func (a ADR) Validate() error {
 	if a.Rationale == "" {
 		return errors.New("ADR rationale cannot be empty")
 	}
-	
+
 	validStatuses := map[string]bool{
 		"Proposed":   true,
 		"Accepted":   true,
 		"Deprecated": true,
 	}
-	
+
 	if !validStatuses[a.Status] {
 		return fmt.Errorf("invalid status: %s", a.Status)
 	}
-	
+
 	return nil
 }

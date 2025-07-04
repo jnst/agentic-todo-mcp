@@ -24,6 +24,6 @@ func (c Context) Validate() error {
 	if c.Content == "" {
 		return errors.New("context content cannot be empty")
 	}
-	
+
 	return nil
 }

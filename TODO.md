@@ -1,8 +1,10 @@
 # TODO: agentic-todo-mcp 実装タスク（TDD実践）
 
 ## 実装状況
-- プロジェクト状況: 設計・計画フェーズ完了、TDD実装開始
+- プロジェクト状況: **MCP Server基盤完了、create_taskツール実装完了**
 - 開発スタイル: t-wadaのTDD（Test-Driven Development）を実践
+- **テストカバレッジ**: 全パッケージでテスト実装済み、全テスト通過
+- **動作確認**: MCP Serverビルド成功、create_taskツール動作可能
 
 ## TDD実践原則
 1. **Red**: 失敗するテストを書く
@@ -33,15 +35,15 @@
 - [x] テストディレクトリ構造の設計
 - [x] テストカバレッジの計測設定
 
-### 4. MCP Server基盤のTDD実装
-- [ ] mcp.Server の初期化をTDDで実装する
-  - [ ] Server作成のテストケース作成
-  - [ ] 最小限のServer初期化実装
-  - [ ] Server設定のリファクタリング
-- [ ] Transport層をTDDで実装する
-  - [ ] StdioTransport のテストケース作成
-  - [ ] Transport接続の実装
-  - [ ] エラーハンドリングの実装
+### 4. MCP Server基盤のTDD実装 ✅
+- [x] mcp.Server の初期化をTDDで実装する
+  - [x] Server作成のテストケース作成
+  - [x] 最小限のServer初期化実装（NewServer, RunServer）
+  - [x] Server設定のリファクタリング
+- [x] Transport層をTDDで実装する
+  - [x] StdioTransport のテストケース作成
+  - [x] Transport接続の実装
+  - [x] エラーハンドリングの実装
 
 ### 5. コアデータモデルのTDD実装
 - [x] Task構造体をTDDで実装する
@@ -60,23 +62,25 @@
 
 ## 優先度：中（Medium Priority） - コア機能のTDD実装
 
-### 6. ファイル操作層のTDD実装
-- [ ] MarkdownパーサーをTDDで実装する
-  - [ ] パーサーのテストケース作成（様々な入力パターン）
-  - [ ] 最小限のパーサー実装
-  - [ ] パーサーのリファクタリング
-- [ ] ファイルI/OをTDDで実装する
-  - [ ] ファイルI/Oのテストケース作成（gomockでモック使用）
-  - [ ] 最小限のファイルI/O実装
-  - [ ] ファイルI/Oのリファクタリング
-- [ ] データ整合性チェックをTDDで実装する
+### 6. ファイル操作層のTDD実装 ✅
+- [x] MarkdownパーサーをTDDで実装する
+  - [x] パーサーのテストケース作成（様々な入力パターン）
+  - [x] 最小限のパーサー実装（ParseTaskContent, ParseStatus, ExtractTaskID）
+  - [x] パーサーのリファクタリング
+- [x] ファイルI/OをTDDで実装する
+  - [x] ファイルI/Oのテストケース作成（一時ディレクトリでのテスト）
+  - [x] 最小限のファイルI/O実装（ReadTasksFile, WriteTasksFile, ReadContextFile, WriteContextFile）
+  - [x] ファイルI/Oのリファクタリング
+- [x] データ整合性チェックをTDDで実装する（ラウンドトリップテスト）
 
-### 7. MCPツール実装のTDD実装
-- [ ] タスク管理MCPツールをTDDで実装する（6ツール）
-  - [ ] create_task MCPツールのテスト・実装
-    - [ ] mcp.NewServerTool でのツール定義
-    - [ ] ハンドラー関数の実装（CallToolParams → CallToolResult）
-    - [ ] 入力パラメータのバリデーション
+### 7. MCPツール実装のTDD実装 🚧 (1/6完了)
+- [x] タスク管理MCPツールをTDDで実装する（6ツール中1完了）
+  - [x] **create_task MCPツールのテスト・実装** ✅
+    - [x] mcp.NewServerTool でのツール定義
+    - [x] ハンドラー関数の実装（CallToolParamsFor → CallToolResultFor）
+    - [x] 入力パラメータのバリデーション
+    - [x] 自動task-id生成（GenerateNextTaskID）
+    - [x] contextファイル作成機能
   - [ ] update_task MCPツールのテスト・実装
   - [ ] delete_task MCPツールのテスト・実装
   - [ ] reorder_task MCPツールのテスト・実装
@@ -145,31 +149,41 @@
 - **mcp.NewServerTool()**: ツール定義（名前、説明、ハンドラー、入力スキーマ）
 - **server.AddTools()**: サーバーにツールを登録
 - **server.Run()**: stdio上でサーバー実行
-- **CallToolParams/CallToolResult**: ツール呼び出しの入出力型
+- **CallToolParamsFor[T]/CallToolResultFor[T]**: ツール呼び出しの入出力型（ジェネリック版）
 - **mcp.StdioTransport**: 標準入出力での通信
+- **mcpsdk alias**: パッケージ名衝突回避のためのエイリアス使用
 
-## ディレクトリ構造計画
+## ディレクトリ構造（実装済み）
 ```
 agentic-todo-mcp/
 ├── cmd/
 │   └── server/
-│       └── main.go           # MCPサーバーエントリーポイント
+│       └── main.go           # ✅ MCPサーバーエントリーポイント（ツール登録済み）
 ├── internal/
 │   ├── config/              # 設定管理
-│   ├── models/              # データモデル (Task, ADR, Context)
-│   ├── storage/             # ファイル操作・永続化
-│   ├── parser/              # Markdownパーサー
+│   ├── model/               # ✅ データモデル (Task, ADR, Context)
+│   │   ├── task.go          # ✅ Task構造体+バリデーション
+│   │   ├── adr.go           # ✅ ADR構造体+バリデーション
+│   │   └── context.go       # ✅ Context構造体+バリデーション
+│   ├── storage/             # ✅ ファイル操作・永続化
+│   │   └── file_storage.go  # ✅ Markdown読み書き（task.md, context/*.md）
+│   ├── parser/              # ✅ Markdownパーサー
+│   │   └── task_parser.go   # ✅ Markdownチェックボックス・task-id解析
 │   ├── search/              # 検索・インデックス
-│   └── mcp/                 # MCPツール実装
+│   └── mcp/                 # ✅ MCPツール実装
+│       ├── server.go        # ✅ MCP Server初期化・Transport
+│       └── tools.go         # ✅ create_taskツール実装
 ├── pkg/
 │   └── types/               # 公開型定義
-├── .todo/                   # 管理対象ディレクトリ
+├── .todo/                   # 管理対象ディレクトリ（動的生成）
 │   ├── task.md
 │   ├── index.md
 │   ├── context/
 │   └── adr/
-├── tests/                   # テストファイル
 └── docs/                    # ドキュメント
+    ├── requirements.md      # ✅ 要件定義
+    ├── mcp-spec.md          # ✅ MCP API仕様
+    └── ubiquitous-language.md # ✅ 用語定義
 ```
 
 ## 参考資料
@@ -194,24 +208,40 @@ type CreateTaskParams struct {
     Subtasks    []string `json:"subtasks,omitempty"`
 }
 
-func CreateTaskHandler(ctx context.Context, session *mcp.ServerSession, params *mcp.CallToolParamsFor[CreateTaskParams]) (*mcp.CallToolResultFor[any], error) {
-    // 実装
-    return &mcp.CallToolResultFor[any]{
-        Content: []mcp.Content{&mcp.TextContent{Text: "Task created"}},
+func CreateTaskHandler(ctx context.Context, session *mcpsdk.ServerSession, params *mcpsdk.CallToolParamsFor[CreateTaskParams]) (*mcpsdk.CallToolResultFor[any], error) {
+    // 実装済み: task-id自動生成、task.md更新、contextファイル作成
+    return &mcpsdk.CallToolResultFor[any]{
+        Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: "Task created successfully"}},
     }, nil
 }
 
 server.AddTools(
-    mcp.NewServerTool("create_task", "Create new main-task", CreateTaskHandler, mcp.Input(
-        mcp.Property("title", mcp.Description("Task title")),
-        mcp.Property("category", mcp.Description("Task category")),
-    )),
+    mcpsdk.NewServerTool("create_task", "Create new main-task with auto-generated task-id", 
+        toolService.CreateTaskHandler, 
+        mcpsdk.Input(
+            mcpsdk.Property("title", mcpsdk.Description("Task title")),
+            mcpsdk.Property("category", mcpsdk.Description("Task category (optional)")),
+            mcpsdk.Property("description", mcpsdk.Description("Task description (optional)")),
+            mcpsdk.Property("subtasks", mcpsdk.Description("List of subtask titles (optional)")),
+        ),
+    ),
 )
 ```
 
-### サーバー実行
+### サーバー実行（実装済み）
 ```go
-if err := server.Run(context.Background(), mcp.NewStdioTransport()); err != nil {
+// cmd/server/main.go
+server := mcp.NewServer()
+toolService := mcp.NewToolService(basePath)
+mcp.AddCreateTaskTool(server, toolService)
+if err := mcp.RunServer(ctx, server); err != nil {
     log.Fatal(err)
 }
 ```
+
+## 🎯 次の実装優先順位
+1. **update_task** - 既存タスクの更新機能
+2. **list_tasks** - タスク一覧表示・フィルタリング機能  
+3. **delete_task** - タスク削除・contextファイル同期削除
+4. **search_tasks** - 全文検索機能
+5. **reorder_task** - タスク優先度管理（位置変更）

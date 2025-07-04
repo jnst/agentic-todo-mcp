@@ -32,5 +32,6 @@
     "**/*.out": true,
     "**/*.test": true,
     "**/*.prof": true
-  }
+  },
+  "makefile.configureOnOpen": false
 }
