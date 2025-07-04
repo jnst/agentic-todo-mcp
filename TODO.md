@@ -21,11 +21,10 @@
 - [x] go.mod dependencies の追加（go-cmp, gomock, MCP SDK）
 
 ### 2. CI/CD基盤構築
-- [ ] GitHub Actions の設定
-- [ ] formatter/linter の自動実行
-- [ ] Pull Request での自動チェック
-- [ ] コミット前フックの設定（pre-commit）
-- [ ] 品質ゲートの設定（linter通過必須）
+- [x] GitHub Actions の設定
+- [x] formatter/linter の自動実行
+- [x] Pull Request での自動チェック
+- [x] 品質ゲートの設定（linter通過必須）
 
 ### 3. テスト環境セットアップ
 - [ ] Go testing フレームワークの準備
